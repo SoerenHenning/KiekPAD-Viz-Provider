@@ -4,6 +4,7 @@ import org.springframework.stereotype.Service;
 
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Session;
+import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 
 @Service
@@ -19,7 +20,7 @@ public class CassandraService {
 		try {
 			final Cluster cluster = Cluster.builder().addContactPoint(IP_ADDRESS).withPort(PORT).build();
 			this.session = cluster.connect(KEYSPACE);
-		} catch (NoHostAvailableException exception) {
+		} catch (NoHostAvailableException | InvalidQueryException exception) {
 			this.session = null;
 		}
 	}
