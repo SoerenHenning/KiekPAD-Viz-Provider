@@ -16,7 +16,16 @@
 
     <title>KiekPAD</title>
 
+    <style>
+      body {
+        padding-bottom: 60px;
+        padding-top: 50px;
+      }
+    </style>
+
     <script type="text/javascript">
+
+    // TODO TEMP
     var MeasurementsCreator = {
       lastMeasurements: [2500, 2500, 2500, 2500, 2500],
       createNewMeasurement: function(time) {
@@ -37,30 +46,47 @@
         }
       }
     }
+
     $(document).ready(function() {
-    	var visualization = new TeeAdViz(d3.select("#plotcontainer"), {
-        width: window.innerWidth-100,
-        measurementsHeight: Math.round(0.35*(window.innerWidth-100)),
+      var plotcontainer = $("#plotcontainer");
+
+    	var visualization = new TeeAdViz(d3.selectAll(plotcontainer.toArray()), {
+        width: plotcontainer.width(),
+        measurementsHeight: Math.round(0.35*(plotcontainer.width())),
+        measurementsAxisLabel: "Response Time in ns",
         predictionVisibility: true,
         anomalyscoresVisibility: true,
         thresholds: [-0.2, 0.2]
       });
+
       visualization.setMeasurements([]);
+
+      var latestMeasurementTime = 0;
+      function requestNewData() {
+        $.ajax({
+          url: "http://localhost:8080/measurements",
+          method: "GET",
+          data: { after: latestMeasurementTime },
+          dataType: "json",
+          crossDomain: true, //TODO temp
+          success: function(data) {
+            visualization.addMeasurements(data);
+          }
+        });
+      }
+
+      setInterval(requestNewData, 1000);
+
+
+      // TODO TEMP
       function addNewData() {
         visualization.addMeasurements([MeasurementsCreator.createNewMeasurement(new Date().getTime())]);
         setTimeout(addNewData, Math.random() * (500 - 100) + 100);
       }
       addNewData();
-      $('#file').change(function(evt) {
-        var file = evt.target.files[0];
-        var reader = new FileReader();
-        reader.onload = function(e) {
-            var dataSets = $.parseJSON(e.target.result);
-            visualization.setMeasurements(dataSets);
-        };
-        reader.readAsText(file);
-      });
+
     });
+
     </script>
 
 
@@ -90,13 +116,7 @@
 
     <div class="container">
 
-      <div class="row">
-
-        <div class="col-sm-12 ">
-
-          <div id="plotcontainer"></div>
-
-        </div>
+      <div id="plotcontainer"></div>
 
     </div> <!-- /container -->
 
