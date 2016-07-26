@@ -25,28 +25,6 @@
 
     <script type="text/javascript">
 
-    // TODO TEMP
-    var MeasurementsCreator = {
-      lastMeasurements: [2500, 2500, 2500, 2500, 2500],
-      createNewMeasurement: function(time) {
-        this.lastMeasurements.shift();
-        var lastMeasurement = this.lastMeasurements[this.lastMeasurements.length-1];
-        var measurement =  Math.max(0, lastMeasurement + 100*2 * (Math.random() - 0.5));
-        this.lastMeasurements.push(measurement);
-        if (Math.random() >= 0.9) {
-          measurement = Math.max(0, lastMeasurement + 1000*2 * (Math.random() - 0.5));
-        }
-        var prediction = this.lastMeasurements.reduce(function(a, b) { return a + b; }) / this.lastMeasurements.length;
-        var anomalyscore = (measurement - prediction) / prediction;
-        return {
-          "time": time,
-          "measurement": measurement,
-          "prediction": prediction,
-          "anomalyscore": anomalyscore
-        }
-      }
-    }
-
     $(document).ready(function() {
       var plotcontainer = $("#plotcontainer");
 
@@ -76,14 +54,6 @@
       }
 
       setInterval(requestNewData, 1000);
-
-
-      // TODO TEMP
-      function addNewData() {
-        visualization.addMeasurements([MeasurementsCreator.createNewMeasurement(new Date().getTime())]);
-        setTimeout(addNewData, Math.random() * (500 - 100) + 100);
-      }
-      addNewData();
 
     });
 
