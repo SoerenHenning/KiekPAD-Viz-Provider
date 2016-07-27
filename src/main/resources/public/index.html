@@ -47,7 +47,10 @@
           data: { after: latestMeasurementTime },
           dataType: "json",
           success: function(data) {
-            visualization.addMeasurements(data);
+            if (data.length > 0) {
+          	  latestMeasurementTime = data[data.length - 1].time;
+              visualization.addMeasurements(data);
+            }
           }
         });
       }
