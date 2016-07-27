@@ -11,7 +11,7 @@ import com.datastax.driver.core.exceptions.NoHostAvailableException;
 public class CassandraService {
 
 	private static final String IP_ADDRESS = "192.168.99.100";
-	private static final int PORT = 32770;
+	private static final int PORT = 32786;
 	private static final String KEYSPACE = "Kiekpad";
 
 	private Session session; // TODO final

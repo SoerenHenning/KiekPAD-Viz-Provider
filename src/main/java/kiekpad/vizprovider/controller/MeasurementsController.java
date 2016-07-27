@@ -34,7 +34,7 @@ public class MeasurementsController {
 
 		final Select statement = QueryBuilder.select("time", "measurement", "prediction", "anomalyscore")
 				.from("measurements")
-				.where(QueryBuilder.eq("series_id", "temp2")) // TODO insert value
+				.where(QueryBuilder.eq("series_id", "foo()")) // TODO insert value
 				.and(QueryBuilder.gt("time", after))
 				.orderBy(QueryBuilder.asc("time"));
 		final ResultSet results = this.cassandraService.getSession().execute(statement);
