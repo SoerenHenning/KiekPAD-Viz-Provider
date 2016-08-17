@@ -26,7 +26,7 @@ public class MeasurementsController {
 	}
 
 	@RequestMapping("/measurements")
-	public ArrayNode measurements(@RequestParam(value = "after", defaultValue = "0") final long after) {
+	public ArrayNode measurements(@RequestParam(value = "series") final String series, @RequestParam(value = "after", defaultValue = "0") final long after) {
 
 		JsonNodeFactory jsonNodeFactory = JsonNodeFactory.instance;
 
@@ -34,7 +34,7 @@ public class MeasurementsController {
 
 		final Select statement = QueryBuilder.select("time", "measurement", "prediction", "anomalyscore")
 				.from("measurements")
-				.where(QueryBuilder.eq("series_id", "foo()")) // TODO insert value
+				.where(QueryBuilder.eq("series_id", series))
 				.and(QueryBuilder.gt("time", after))
 				.orderBy(QueryBuilder.asc("time"));
 		final ResultSet results = this.cassandraService.getSession().execute(statement);

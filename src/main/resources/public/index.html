@@ -39,12 +39,16 @@
 
       visualization.setMeasurements([]);
 
+      var series = getParameterByName("test");
       var latestMeasurementTime = 0;
       function requestNewData() {
         $.ajax({
           url: "measurements",
           method: "GET",
-          data: { after: latestMeasurementTime },
+          data: {
+            series: series,
+            after: latestMeasurementTime
+          },
           dataType: "json",
           success: function(data) {
             if (data.length > 0) {
@@ -58,6 +62,16 @@
       setInterval(requestNewData, 1000);
 
     });
+
+    function getParameterByName(name, url) {
+      if (!url) url = window.location.href;
+      name = name.replace(/[\[\]]/g, "\\$&");
+      var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+          results = regex.exec(url);
+      if (!results) return null;
+      if (!results[2]) return '';
+      return decodeURIComponent(results[2].replace(/\+/g, " "));
+  }
 
     </script>
 
