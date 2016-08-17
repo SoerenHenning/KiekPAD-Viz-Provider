@@ -39,14 +39,13 @@
 
       visualization.setMeasurements([]);
 
-      var series = getParameterByName("test");
       var latestMeasurementTime = 0;
       function requestNewData() {
         $.ajax({
           url: "measurements",
           method: "GET",
           data: {
-            series: series,
+            series: getParameterByName("series"),
             after: latestMeasurementTime
           },
           dataType: "json",
