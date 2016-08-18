@@ -1,5 +1,10 @@
 package kiekpad.vizprovider.service;
 
+import java.time.Duration;
+import java.time.Instant;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.datastax.driver.core.Cluster;
@@ -10,23 +15,59 @@ import com.datastax.driver.core.exceptions.NoHostAvailableException;
 @Service
 public class CassandraService {
 
-	private static final String IP_ADDRESS = "192.168.99.100";
-	private static final int PORT = 32786;
-	private static final String KEYSPACE = "Kiekpad";
+	// private static final String IP_ADDRESS = "192.168.99.100";
+	// private static final int PORT = 32770;
+	// private static final String KEYSPACE = "Kiekpad";
 
-	private Session session; // TODO final
+	private final static int WAITING_SLEEP_MILLIS = 1000;
 
-	public CassandraService() {
-		try {
-			final Cluster cluster = Cluster.builder().addContactPoint(IP_ADDRESS).withPort(PORT).build();
-			this.session = cluster.connect(KEYSPACE);
-		} catch (NoHostAvailableException | InvalidQueryException exception) {
-			this.session = null;
-		}
+	private Session session;
+
+	@Autowired
+	public CassandraService(@Value("${cassandra.address}") final String host, @Value("${cassandra.port}") final int port,
+			@Value("${cassandra.keyspace}") final String keyspace, @Value("${cassandra.timeout}") final int timeoutInMillis) {
+		createSession(host, port, keyspace, timeoutInMillis);
 	}
 
 	public Session getSession() {
 		return session;
+	}
+
+	private void createSession(final String host, final int port, final String keyspace, final int timeoutInMillis) {
+		final Instant start = Instant.now();
+
+		Cluster cluster = Cluster.builder().addContactPoint(host).withPort(port).build();
+		while (true) {
+			try {
+				this.session = cluster.connect(keyspace);
+				break;
+			} catch (NoHostAvailableException exception) {
+				// Host not unavailable
+				System.out.println("Waiting for host..."); // TODO
+				if (Duration.between(start, Instant.now()).toMillis() < timeoutInMillis) {
+					cluster.close();
+					cluster = Cluster.builder().addContactPoint(host).withPort(port).build();
+					try {
+						Thread.sleep(WAITING_SLEEP_MILLIS);
+					} catch (InterruptedException e) {
+						throw new IllegalStateException(e);
+					}
+				} else {
+					throw exception;
+				}
+			} catch (InvalidQueryException exception) {
+				// Keyspace does not exist
+				System.out.println("Create Keyspace..."); // TODO
+				createKeyspaceIfNotExists(cluster, keyspace);
+			}
+		}
+	}
+
+	private void createKeyspaceIfNotExists(final Cluster cluster, final String keyspace) {
+		Session session = cluster.connect();
+		session.execute("CREATE KEYSPACE IF NOT EXISTS " + keyspace + " WITH replication " +
+				"= {'class':'SimpleStrategy', 'replication_factor':1};");
+		session.close();
 	}
 
 }
