@@ -30,6 +30,7 @@ function TeeAdViz(domContainer, config) {
 	this.measurementsClass = config.measurementsClass || "measurements";
 	this.anomalyscoresClass = config.anomalyscoresClass || "anomalyscores";
 	this.measurementsPlotStartWithZero = config.measurementsPlotStartWithZero || true;
+	this.yAxisSpacing = config.yAxisSpacing || 65; // in px
 	this.indicatorOffset = config.indicatorOffset || 65; // in px
 	this.defaultTimeSpan = config.defaultTimeSpan || 60*1000; // one minute
 	this.defaultStartTime = config.defaultStartTime || new Date();
@@ -45,12 +46,14 @@ function TeeAdViz(domContainer, config) {
   this.measurementsPlot = new CanvasTimeSeriesIndicatorPlot(this.measurementsPlotContainer, [this.width, this.measurementsHeight], {
     yAxisLabel: this.measurementsAxisLabel,
 		disableLegend: true,
+		plotMargins: {top: 20, right: 20, bottom: 30, left: this.yAxisSpacing},
     updateViewCallback: (this.setViews).bind(this),
 		indicatorColor: this.indicatorColor
   });
   this.anomalyscoresPlot = new CanvasTimeSeriesPlot(this.anomalyscoresPlotContainer, [this.width, this.anomalyscoresHeight], {
     yAxisLabel: this.anomalyscoresAxisLabel,
 		disableLegend: true,
+		plotMargins: {top: 20, right: 20, bottom: 30, left: this.yAxisSpacing},
     updateViewCallback: (this.setViews).bind(this)
   });
 
