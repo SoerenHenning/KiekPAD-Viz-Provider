@@ -1,12 +1,15 @@
 package kiekpad.vizprovider.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.HttpServerErrorException;
 
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
+import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.datastax.driver.core.querybuilder.Select;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -19,6 +22,7 @@ import kiekpad.vizprovider.service.CassandraService;
 public class MeasurementsController {
 
 	private final CassandraService cassandraService;
+	private final JsonNodeFactory jsonNodeFactory = JsonNodeFactory.instance;
 
 	@Autowired
 	public MeasurementsController(final CassandraService cassandraService) {
@@ -28,30 +32,32 @@ public class MeasurementsController {
 	@RequestMapping("/measurements")
 	public ArrayNode measurements(@RequestParam(value = "series") final String series, @RequestParam(value = "after", defaultValue = "0") final long after) {
 
-		JsonNodeFactory jsonNodeFactory = JsonNodeFactory.instance;
-
-		ArrayNode array = jsonNodeFactory.arrayNode();
+		ArrayNode measurements = jsonNodeFactory.arrayNode();
 
 		final Select statement = QueryBuilder.select("time", "measurement", "prediction", "anomalyscore")
 				.from("measurements")
 				.where(QueryBuilder.eq("series_id", series))
 				.and(QueryBuilder.gt("time", after))
 				.orderBy(QueryBuilder.asc("time"));
-		final ResultSet results = this.cassandraService.getSession().execute(statement);
 
-		for (Row row : results) {
+		try {
+			final ResultSet results = this.cassandraService.getSession().execute(statement);
 
-			ObjectNode node = jsonNodeFactory.objectNode();
-			node.set("time", jsonNodeFactory.numberNode(row.getTimestamp("time").toInstant().toEpochMilli()));
-			node.set("measurement", jsonNodeFactory.numberNode(row.getDouble("measurement")));
-			node.set("prediction", jsonNodeFactory.numberNode(row.getDouble("prediction")));
-			node.set("anomalyscore", jsonNodeFactory.numberNode(row.getDouble("anomalyscore")));
+			for (Row row : results) {
+				ObjectNode node = jsonNodeFactory.objectNode();
+				node.set("time", jsonNodeFactory.numberNode(row.getTimestamp("time").toInstant().toEpochMilli()));
+				node.set("measurement", jsonNodeFactory.numberNode(row.getDouble("measurement")));
+				node.set("prediction", jsonNodeFactory.numberNode(row.getDouble("prediction")));
+				node.set("anomalyscore", jsonNodeFactory.numberNode(row.getDouble("anomalyscore")));
+				measurements.add(node);
+			}
 
-			array.add(node);
-
+		} catch (NoHostAvailableException exception) {
+			// The database is currently not available
+			throw new HttpServerErrorException(HttpStatus.SERVICE_UNAVAILABLE);
 		}
 
-		return array;
+		return measurements;
 	}
 
 }
