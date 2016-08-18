@@ -119,7 +119,7 @@ public class MeasurementsController {
 
 					while (this.rowsIterator.hasNext()) {
 						Row row = this.rowsIterator.next();
-						if (row.getTimestamp("time") == rows.get(0).getTimestamp("time")) {
+						if (row.getTimestamp("time").toInstant().toEpochMilli() == rows.get(0).getTimestamp("time").toInstant().toEpochMilli()) {
 							rows.add(row);
 						} else {
 							this.previous = row;
