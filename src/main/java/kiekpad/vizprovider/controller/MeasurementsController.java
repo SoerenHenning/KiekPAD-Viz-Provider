@@ -73,12 +73,14 @@ public class MeasurementsController {
 			double measurement = rows.get(0).getDouble("measurement");
 			double prediction = rows.get(0).getDouble("prediction");
 			double anomalyscore = rows.get(0).getDouble("anomalyscore");
+			boolean isAggregated = rows.size() > 1;
 
 			ObjectNode node = this.jsonNodeFactory.objectNode();
 			node.set("time", this.jsonNodeFactory.numberNode(timestamp));
 			node.set("measurement", this.jsonNodeFactory.numberNode(measurement));
 			node.set("prediction", this.jsonNodeFactory.numberNode(prediction));
 			node.set("anomalyscore", this.jsonNodeFactory.numberNode(anomalyscore));
+			node.set("isAggregated", this.jsonNodeFactory.booleanNode(isAggregated));
 
 			return node;
 		}
