@@ -59,6 +59,27 @@ public class MeasurementsController {
 		return measurements;
 	}
 
+	@RequestMapping("/series")
+	public ArrayNode series() {
+		ArrayNode series = jsonNodeFactory.arrayNode();
+
+		final Select statement = QueryBuilder.select("series_id").distinct().from("measurements");
+		try {
+			final ResultSet results = this.cassandraService.getSession().execute(statement);
+			for (Row row : results) {
+				String name = row.getString("series_id");
+				series.add(jsonNodeFactory.textNode(name));
+			}
+		} catch (NoHostAvailableException exception) {
+			// The database is currently not available
+			throw new HttpServerErrorException(HttpStatus.SERVICE_UNAVAILABLE);
+		}
+
+		return series;
+	}
+
+	// TODO This could be better extracted to seperate classes
+
 	private static interface RowsAggregator {
 		public ObjectNode aggregate(List<Row> rows);
 	}
