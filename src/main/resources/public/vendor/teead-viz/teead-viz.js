@@ -69,11 +69,17 @@ TeeAdViz.prototype.setMeasurements = function(measurementsSet) {
 
 	var anomalystates = [];
 	measurementsSet.forEach(function(value) {
-		this.values.measurements.push([value.time, value.measurement]);
-		this.values.predictions.push([value.time, value.prediction]);
-		this.values.anomalyscores.push([value.time, value.anomalyscore]);
-		if ((this.thresholds[0] != null && value.anomalyscore <= this.thresholds[0]) || (this.thresholds[1] != null && value.anomalyscore >= this.thresholds[1])) {
-			anomalystates.push(value.time); // Push time to list of anomaly states
+		if (isNumeric(value.measurement)) {
+			this.values.measurements.push([value.time, value.measurement]);
+		}
+		if (isNumeric(value.prediction)) {
+			this.values.predictions.push([value.time, value.prediction]);
+		}
+		if (isNumeric(value.anomalyscore)) {
+			this.values.anomalyscores.push([value.time, value.anomalyscore]);
+			if ((this.thresholds[0] != null && value.anomalyscore <= this.thresholds[0]) || (this.thresholds[1] != null && value.anomalyscore >= this.thresholds[1])) {
+				anomalystates.push(value.time); // Push time to list of anomaly states
+			}
 		}
 	}, this);
 
@@ -101,16 +107,22 @@ TeeAdViz.prototype.addMeasurements = function(measurementsSet) {
 
 	measurementsSet.forEach(function(value) {
 		// This updated also this.values
-		this.measurementsPlot.addDataPoint("measurements", [value.time, value.measurement], false, false);
-		if (this.predictionVisibility) {
-			this.measurementsPlot.addDataPoint("predictions", [value.time, value.prediction], false, false);
-		} else {
-			this.values.predictions.push([value.time, value.prediction]);
+		if (isNumeric(value.measurement)) {
+			this.measurementsPlot.addDataPoint("measurements", [value.time, value.measurement], false, false);
 		}
-		if ((this.thresholds[0] != null && value.anomalyscore <= this.thresholds[0]) || (this.thresholds[1] != null && value.anomalyscore >= this.thresholds[1])) {
-			this.measurementsPlot.addIndicatorDataPoint(value.time, false, false);
+		if (isNumeric(value.prediction)) {
+			if (this.predictionVisibility) {
+				this.measurementsPlot.addDataPoint("predictions", [value.time, value.prediction], false, false);
+			} else {
+				this.values.predictions.push([value.time, value.prediction]);
+			}
 		}
-		this.anomalyscoresPlot.addDataPoint("anomalyscores", [value.time, value.anomalyscore], false, false);
+		if (isNumeric(value.anomalyscore)) {
+			if ((this.thresholds[0] != null && value.anomalyscore <= this.thresholds[0]) || (this.thresholds[1] != null && value.anomalyscore >= this.thresholds[1])) {
+				this.measurementsPlot.addIndicatorDataPoint(value.time, false, false);
+			}
+			this.anomalyscoresPlot.addDataPoint("anomalyscores", [value.time, value.anomalyscore], false, false);
+		}
 	}, this);
 
 	var afterCalculatedXDomain = this.measurementsPlot.calculateXDomain();
@@ -187,3 +199,7 @@ TeeAdViz.prototype.updateDomains = function() {
 	this.measurementsPlot.updateDomains(this.measurementsPlot.getXDomain(), measurementsYDomain, false);
 	this.anomalyscoresPlot.updateDomains(this.measurementsPlot.getXDomain(), this.anomalyscoresPlot.calculateYDomain(), false);
 };
+
+function isNumeric(n) {
+  return !isNaN(parseFloat(n)) && isFinite(n);
+}
