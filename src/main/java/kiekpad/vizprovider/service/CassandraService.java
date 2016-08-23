@@ -32,6 +32,9 @@ public class CassandraService {
 	private void createSession(final String host, final int port, final String keyspace, final int timeoutInMillis) {
 		final Instant start = Instant.now();
 
+		System.out.println("Use host: " + host); // TODO
+		System.out.println("Use port: " + port); // TODO
+
 		Cluster cluster = Cluster.builder().addContactPoint(host).withPort(port).build();
 		while (true) {
 			try {
