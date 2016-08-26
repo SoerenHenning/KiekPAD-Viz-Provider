@@ -21,6 +21,12 @@
         padding-bottom: 60px;
         padding-top: 50px;
       }
+
+      #maincontainer {
+        padding-top: 40px;
+        padding-bottom: 40px;
+      }
+
     </style>
 
     <script type="text/javascript">
@@ -94,13 +100,40 @@
         </div>
         <div id="navbar" class="navbar-collapse collapse">
           <ul class="nav navbar-nav">
-            <li class="active"><a href="#">KiekPAD</a></li>
+            <li class="active"><a href="#">Anomaly Detection</a></li>
           </ul>
         </div><!--/.nav-collapse -->
       </div>
     </nav>
 
-    <div class="container">
+    <div id="maincontainer" class="container">
+
+      <div class="dropdown pull-left">
+        <button class="btn btn-default dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+          series-1-2-3
+          <span class="caret"></span>
+        </button>
+        <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
+          <li><a href="#">series-1-2-3</a></li>
+          <li><a href="#">series-1-2-3</a></li>
+          <li><a href="#">series-1-2-3</a></li>
+        </ul>
+      </div>
+
+      <div class="form-inline pull-right">
+        <button type="submit" class="btn btn-default">Predictions</button>
+        <button type="submit" class="btn btn-default">Aomaly Scores</button>
+        <div class="form-group">
+          <label for="exampleInputName2">Thresholds</label>
+          <input type="text" class="form-control" id="exampleInputName2" placeholder="Lower" style="width: 5em;">
+          <input type="text" class="form-control" id="exampleInputName2" placeholder="Upper" style="width: 5em;">
+        </div>
+        <div class="form-group">
+          <label for="exampleInputEmail2">Refresh Interval</label>
+          <input type="email" class="form-control" id="exampleInputEmail2" placeholder="every ms" style="width: 5em;">
+        </div>
+        <button type="submit" class="btn btn-default">Options</button>
+      </div>
 
       <div id="plotcontainer"></div>
 
