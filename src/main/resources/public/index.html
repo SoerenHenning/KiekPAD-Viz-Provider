@@ -27,6 +27,30 @@
         padding-bottom: 40px;
       }
 
+      #plotcontrol {
+        overflow: hidden;
+      }
+
+      #toggle-options {
+        position: relative;
+        z-index: 32;
+      }
+
+      #options {
+        display: inline-block !important;
+        position: relative;
+        z-index: 16;
+        transition: 0.2s;
+        right: 0%;
+        opacity: 1;
+      }
+
+      #options.hidden {
+        display: inline-block !important;
+        right: -100%;
+        opacity: 0;
+      }
+
     </style>
 
     <script type="text/javascript">
@@ -67,17 +91,38 @@
 
       setInterval(requestNewData, 1000);
 
+
+      $('#toggle-options').click(function() {
+        $('#options').toggleClass('hidden');
+      });
+
+      $('#toggle-predictions').click(function() {
+        alert('Predictions!');
+      });
+
+      $('#toggle-anomalyscores').click(function() {
+        alert('Anomaly Scores!');
+      });
+
+      $('.threshold').change(function() {
+        alert('Thresholds!');
+      });
+
+      $('#refresh-interval').on('input', function() {
+        alert('Refresh Interval!');
+      });
+
     });
 
     function getParameterByName(name, url) {
-      if (!url) url = window.location.href;
-      name = name.replace(/[\[\]]/g, "\\$&");
-      var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
-          results = regex.exec(url);
-      if (!results) return null;
-      if (!results[2]) return '';
-      return decodeURIComponent(results[2].replace(/\+/g, " "));
-  }
+        if (!url) url = window.location.href;
+        name = name.replace(/[\[\]]/g, "\\$&");
+        var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+            results = regex.exec(url);
+        if (!results) return null;
+        if (!results[2]) return '';
+        return decodeURIComponent(results[2].replace(/\+/g, " "));
+    }
 
     </script>
 
@@ -108,31 +153,45 @@
 
     <div id="maincontainer" class="container">
 
-      <div class="dropdown pull-left">
-        <button class="btn btn-default dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
-          series-1-2-3
-          <span class="caret"></span>
-        </button>
-        <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
-          <li><a href="#">series-1-2-3</a></li>
-          <li><a href="#">series-1-2-3</a></li>
-          <li><a href="#">series-1-2-3</a></li>
-        </ul>
-      </div>
+      <div id="plotcontrol">
 
-      <div class="form-inline pull-right">
-        <button type="submit" class="btn btn-default">Predictions</button>
-        <button type="submit" class="btn btn-default">Aomaly Scores</button>
-        <div class="form-group">
-          <label for="exampleInputName2">Thresholds</label>
-          <input type="text" class="form-control" id="exampleInputName2" placeholder="Lower" style="width: 5em;">
-          <input type="text" class="form-control" id="exampleInputName2" placeholder="Upper" style="width: 5em;">
+        <div class="dropdown pull-left">
+          <button class="btn btn-default dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+            series-1-2-3
+            <span class="caret"></span>
+          </button>
+          <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
+            <li><a href="#">series-1-2-3</a></li>
+            <li><a href="#">series-1-2-3</a></li>
+            <li><a href="#">series-1-2-3</a></li>
+          </ul>
         </div>
-        <div class="form-group">
-          <label for="exampleInputEmail2">Refresh Interval</label>
-          <input type="email" class="form-control" id="exampleInputEmail2" placeholder="every ms" style="width: 5em;">
+
+        <div class="form-inline pull-right">
+          <span id="options">
+            <button type="submit" id="toggle-predictions" class="btn btn-default" data-toggle="button">
+              Predictions
+            </button>
+            <button type="submit"  id="toggle-anomalyscores" class="btn btn-default" data-toggle="button">
+              Anomaly Scores
+            </button>
+            <div class="form-group">
+              <div class="input-group">
+                <div class="input-group-addon">Thresholds</div>
+                <input type="text" class="form-control threshold" id="lower-threshold" placeholder="Lower" style="width: 5em; border-right: 0 none;">
+                <input type="text" class="form-control threshold" id="upper-threshold" placeholder="Upper" style="width: 5em;">
+              </div>
+            </div>
+            <div class="form-group">
+              <div class="input-group">
+                <div class="input-group-addon">Refresh Interval</div>
+                <input type="text" class="form-control" id="refresh-interval" placeholder="in ms" style="width: 5em;">
+              </div>
+            </div>
+          </span>
+          <button type="submit" id="toggle-options" class="btn btn-default">Options</button>
         </div>
-        <button type="submit" class="btn btn-default">Options</button>
+
       </div>
 
       <div id="plotcontainer"></div>
