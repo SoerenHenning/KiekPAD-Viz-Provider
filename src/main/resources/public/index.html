@@ -25,10 +25,37 @@
       #maincontainer {
         padding-top: 40px;
         padding-bottom: 40px;
+        position: relative
       }
 
-      #plotcontrol {
-        overflow: hidden;
+      #loading-indicator {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        z-index: 256;
+        font-size: 20em;
+        text-align: center;
+        top: 0%;
+        transition: 1s;
+      }
+      #loading-indicator.hidden {
+        top: -100%;
+        display: block !important;
+      }
+
+      #content-blocker {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        z-index: 128;
+        background-color: rgba(255,255,255,0.8);
+        transition: background-color 0.8s, height 0s 0s;
+      }
+      #content-blocker.hidden {
+        display: block !important;
+        height: 0;
+        background-color: transparent;
+        transition: background-color 0.8s 0.2s, height 0s 1s;
       }
 
       #toggle-options {
@@ -63,12 +90,23 @@
         measurementsHeight: Math.round(0.35*(plotcontainer.width())),
         measurementsAxisLabel: "Response Time in ns",
         yAxisSpacing: 100,
-        predictionVisibility: true,
-        anomalyscoresVisibility: true,
+        predictionVisibility: false,
+        anomalyscoresVisibility: false,
         thresholds: [-0.5, 0.5]
       });
 
       visualization.setMeasurements([]);
+
+      var series;
+
+      $.ajax({
+        url: "series",
+        method: "GET",
+        dataType: "json",
+        success: function(data) {
+          series = data;
+        }
+      });
 
       var latestMeasurementTime = 0;
       function requestNewData() {
@@ -85,6 +123,12 @@
           	  latestMeasurementTime = data[data.length - 1].time;
               visualization.addMeasurements(data);
             }
+
+            //TODO Temp here
+            setTimeout(function() {
+              $('#content-blocker').addClass('hidden');
+              $('#loading-indicator').addClass('hidden');
+            }, 100);
           }
         });
       }
@@ -97,19 +141,19 @@
       });
 
       $('#toggle-predictions').click(function() {
-        alert('Predictions!');
+        visualization.setPredictionVisibility(!$(this).hasClass('active'));
       });
 
       $('#toggle-anomalyscores').click(function() {
-        alert('Anomaly Scores!');
+        visualization.setAnomalyScoreVisibility(!$(this).hasClass('active'));
       });
 
       $('.threshold').change(function() {
-        alert('Thresholds!');
+        visualization.setThresholds($('#lower-threshold').val(), $('#upper-threshold').val());
       });
 
-      $('#refresh-interval').on('input', function() {
-        alert('Refresh Interval!');
+      $('#refresh-interval').change(function() {
+        alert('Refresh Interval!'); //TODO
       });
 
     });
@@ -153,6 +197,9 @@
 
     <div id="maincontainer" class="container">
 
+      <div id="loading-indicator">...</div>
+      <div id="content-blocker"></div>
+
       <div id="plotcontrol">
 
         <div class="dropdown pull-left">
@@ -167,8 +214,8 @@
           </ul>
         </div>
 
-        <div class="form-inline pull-right">
-          <span id="options">
+        <div class="form-inline pull-right" style="overflow: hidden;">
+          <span id="options" class="hidden">
             <button type="submit" id="toggle-predictions" class="btn btn-default" data-toggle="button">
               Predictions
             </button>
