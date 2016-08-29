@@ -7,6 +7,7 @@
 
     <link media="all" type="text/css" rel="stylesheet" href="vendor/bootstrap/css/bootstrap.min.css">
     <link media="all" type="text/css" rel="stylesheet" href="vendor/canvasplot/canvasplot.css">
+    <link rel="stylesheet" href="vendor/font-awesome/css/font-awesome.min.css">
     <script src="vendor/jquery/jquery-2.2.4.min.js"></script>
     <script src="vendor/bootstrap/js/bootstrap.min.js"></script>
     <script src="vendor/d3/d3.min.js" charset="utf-8"></script>
@@ -31,9 +32,10 @@
       #loading-indicator {
         position: absolute;
         width: 100%;
-        height: 100%;
+        height: 90%;
+        padding-top: 10%;
         z-index: 256;
-        font-size: 20em;
+        font-size: 5em;
         text-align: center;
         top: 0%;
         transition: 1s;
@@ -85,36 +87,34 @@
     $(document).ready(function() {
       var plotcontainer = $("#plotcontainer");
 
+      var thresholds = [-0.5, 0.5];
+      var refreshInterval = 1000;
+
     	var visualization = new TeeAdViz(d3.selectAll(plotcontainer.toArray()), {
         width: plotcontainer.width(),
         measurementsHeight: Math.round(0.35*(plotcontainer.width())),
         measurementsAxisLabel: "Response Time in ns",
+        indicatorColor: 'crimson',
+        anomalyscoresColor: 'crimson',
         yAxisSpacing: 100,
         predictionVisibility: false,
         anomalyscoresVisibility: false,
-        thresholds: [-0.5, 0.5]
+        thresholds: thresholds
       });
 
       visualization.setMeasurements([]);
 
-      var series;
-
-      $.ajax({
-        url: "series",
-        method: "GET",
-        dataType: "json",
-        success: function(data) {
-          series = data;
-        }
-      });
-
+      var refreshIntervalId;
       var latestMeasurementTime = 0;
-      function requestNewData() {
+      var series = getParameterByName("series");
+      var allSeries;
+
+      function requestNewData(callback) {
         $.ajax({
           url: "measurements",
           method: "GET",
           data: {
-            series: getParameterByName("series"),
+            series: series,
             after: latestMeasurementTime
           },
           dataType: "json",
@@ -123,17 +123,46 @@
           	  latestMeasurementTime = data[data.length - 1].time;
               visualization.addMeasurements(data);
             }
-
-            //TODO Temp here
-            setTimeout(function() {
-              $('#content-blocker').addClass('hidden');
-              $('#loading-indicator').addClass('hidden');
-            }, 100);
+            if (callback) {
+              callback();
+            }
           }
         });
       }
 
-      setInterval(requestNewData, 1000);
+      function setRefreshInterval(interval) {
+        clearInterval(refreshIntervalId);
+        refreshIntervalId = setInterval(requestNewData, interval);
+      }
+
+
+      $.ajax({
+        url: "series",
+        method: "GET",
+        dataType: "json",
+        success: function(data) {
+          allSeries = data;
+          if (series === null) {
+            series = allSeries[0];
+          }
+          requestNewData(function() {
+            setTimeout(function() {
+              $('#content-blocker').addClass('hidden');
+              $('#loading-indicator').addClass('hidden');
+            }, 100); //To avoid ugly effects
+            setRefreshInterval(refreshInterval);
+          });
+          $('#series').text(series);
+          allSeries.forEach(function(cSeries) {
+            $('#all-series').append('<li><a href="?series=' + cSeries + '"' + ((cSeries == series) ? 'active' : '') + '>' + cSeries + '</a></li>');
+          });
+        }
+      });
+
+
+      $('#lower-threshold').val(thresholds[0]);
+      $('#upper-threshold').val(thresholds[1]);
+      $('#refresh-interval').val(refreshInterval);
 
 
       $('#toggle-options').click(function() {
@@ -153,7 +182,7 @@
       });
 
       $('#refresh-interval').change(function() {
-        alert('Refresh Interval!'); //TODO
+        setRefreshInterval($(this).val());
       });
 
     });
@@ -197,21 +226,23 @@
 
     <div id="maincontainer" class="container">
 
-      <div id="loading-indicator">...</div>
+      <div id="loading-indicator">
+        <i class="fa fa-spinner fa-spin fa-3x fa-fw"></i>
+        <span class="sr-only">Loading...</span>
+      </div>
       <div id="content-blocker"></div>
 
       <div id="plotcontrol">
 
         <div class="dropdown pull-left">
-          <button class="btn btn-default dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
-            series-1-2-3
+          <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+            <span id="series">
+              <i class="fa fa-spinner fa-spin fa-fw"></i>
+              <span>Loading...</span>
+            </span>
             <span class="caret"></span>
           </button>
-          <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
-            <li><a href="#">series-1-2-3</a></li>
-            <li><a href="#">series-1-2-3</a></li>
-            <li><a href="#">series-1-2-3</a></li>
-          </ul>
+          <ul class="dropdown-menu" id="all-series"></ul>
         </div>
 
         <div class="form-inline pull-right" style="overflow: hidden;">
