@@ -16,6 +16,7 @@ import com.datastax.driver.core.Row;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.datastax.driver.core.querybuilder.Select;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -34,9 +35,20 @@ public class MeasurementsController {
 	}
 
 	@RequestMapping("/measurements")
-	public ArrayNode measurements(@RequestParam(value = "series") final String series, @RequestParam(value = "after", defaultValue = "0") final long after) {
+	public ArrayNode measurements(@RequestParam(value = "series", defaultValue = "") String series,
+			@RequestParam(value = "after", defaultValue = "0") final long after) {
 
 		ArrayNode measurements = jsonNodeFactory.arrayNode();
+
+		if (series.equals("")) {
+			JsonNode firstSeries = this.series().get(0);
+			if (firstSeries == null) {
+				// No series exists
+				return measurements;
+			} else {
+				series = firstSeries.asText();
+			}
+		}
 
 		final Select statement = QueryBuilder.select("time", "measurement", "prediction", "anomalyscore")
 				.from("measurements")
