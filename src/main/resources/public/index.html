@@ -154,7 +154,7 @@
           });
           $('#series').text(series);
           allSeries.forEach(function(cSeries) {
-            $('#all-series').append('<li><a href="?series=' + cSeries + '"' + ((cSeries == series) ? 'active' : '') + '>' + cSeries + '</a></li>');
+            $('#all-series').append('<li' + ((cSeries == series) ? ' class="active"' : '') + '><a href="?series=' + cSeries + '">' + cSeries + '</a></li>');
           });
         }
       });
