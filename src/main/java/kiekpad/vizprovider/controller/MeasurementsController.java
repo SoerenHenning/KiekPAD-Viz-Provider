@@ -1,9 +1,5 @@
 package kiekpad.vizprovider.controller;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -21,6 +17,8 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import kiekpad.vizprovider.service.CassandraService;
+import kiekpad.vizprovider.util.aggreation.AggregatedResultSet;
+import kiekpad.vizprovider.util.aggreation.MeanAggregator;
 
 @RestController
 public class MeasurementsController {
@@ -77,109 +75,4 @@ public class MeasurementsController {
 
 		return series;
 	}
-
-	// TODO This could be better extracted to seperate classes
-
-	private static interface RowsAggregator {
-		public ObjectNode aggregate(List<Row> rows);
-	}
-
-	private static class MeanAggregator implements RowsAggregator {
-
-		private final JsonNodeFactory jsonNodeFactory = JsonNodeFactory.instance;
-
-		@Override
-		public ObjectNode aggregate(final List<Row> rows) {
-			long timestamp = rows.get(0).getTimestamp("time").toInstant().toEpochMilli();
-
-			double measurement = rows.stream().mapToDouble(r -> r.getDouble("measurement")).filter(m -> Double.isFinite(m)).average().orElse(Double.NaN);
-			double prediction = rows.stream().mapToDouble(r -> r.getDouble("prediction")).filter(p -> Double.isFinite(p)).average().orElse(Double.NaN);
-			double anomalyscore = rows.stream().mapToDouble(r -> r.getDouble("anomalyscore")).filter(s -> Double.isFinite(s)).average().orElse(Double.NaN);
-			boolean isAggregated = rows.size() > 1;
-
-			ObjectNode node = this.jsonNodeFactory.objectNode();
-			node.set("time", this.jsonNodeFactory.numberNode(timestamp));
-			node.set("measurement", this.jsonNodeFactory.numberNode(measurement));
-			node.set("prediction", this.jsonNodeFactory.numberNode(prediction));
-			node.set("anomalyscore", this.jsonNodeFactory.numberNode(anomalyscore));
-			node.set("isAggregated", this.jsonNodeFactory.booleanNode(isAggregated));
-
-			return node;
-		}
-
-	}
-
-	private static class TakeFirstAggregator implements RowsAggregator {
-
-		private final JsonNodeFactory jsonNodeFactory = JsonNodeFactory.instance;
-
-		@Override
-		public ObjectNode aggregate(final List<Row> rows) {
-			long timestamp = rows.get(0).getTimestamp("time").toInstant().toEpochMilli();
-			double measurement = rows.get(0).getDouble("measurement");
-			double prediction = rows.get(0).getDouble("prediction");
-			double anomalyscore = rows.get(0).getDouble("anomalyscore");
-			boolean isAggregated = rows.size() > 1;
-
-			ObjectNode node = this.jsonNodeFactory.objectNode();
-			node.set("time", this.jsonNodeFactory.numberNode(timestamp));
-			node.set("measurement", this.jsonNodeFactory.numberNode(measurement));
-			node.set("prediction", this.jsonNodeFactory.numberNode(prediction));
-			node.set("anomalyscore", this.jsonNodeFactory.numberNode(anomalyscore));
-			node.set("isAggregated", this.jsonNodeFactory.booleanNode(isAggregated));
-
-			return node;
-		}
-
-	}
-
-	private static class AggregatedResultSet implements Iterable<ObjectNode> {
-
-		private final ResultSet resultSet;
-		private final RowsAggregator aggregator;
-
-		public AggregatedResultSet(final ResultSet resultSet, final RowsAggregator aggregator) {
-			this.resultSet = resultSet;
-			this.aggregator = aggregator;
-		}
-
-		@Override
-		public Iterator<ObjectNode> iterator() {
-			return new Iterator<ObjectNode>() {
-
-				private final Iterator<Row> rowsIterator = resultSet.iterator();
-				private Row previous = null;
-
-				@Override
-				public boolean hasNext() {
-					return this.rowsIterator.hasNext();
-				}
-
-				@Override
-				public ObjectNode next() {
-
-					List<Row> rows = new ArrayList<>();
-					if (this.previous == null) {
-						rows.add(this.rowsIterator.next());
-					} else {
-						rows.add(this.previous);
-					}
-
-					while (this.rowsIterator.hasNext()) {
-						Row row = this.rowsIterator.next();
-						if (row.getTimestamp("time").toInstant().toEpochMilli() == rows.get(0).getTimestamp("time").toInstant().toEpochMilli()) {
-							rows.add(row);
-						} else {
-							this.previous = row;
-							break;
-						}
-					}
-
-					return AggregatedResultSet.this.aggregator.aggregate(rows);
-				}
-			};
-		}
-
-	}
-
 }
