@@ -47,7 +47,7 @@ public class MeasurementsController {
 		try {
 			final ResultSet results = this.cassandraService.getSession().execute(statement);
 
-			for (ObjectNode node : new AggregatedResultSet(results, new TakeFirstAggregator())) {
+			for (ObjectNode node : new AggregatedResultSet(results, new MeanAggregator())) {
 				measurements.add(node);
 			}
 
@@ -82,6 +82,31 @@ public class MeasurementsController {
 
 	private static interface RowsAggregator {
 		public ObjectNode aggregate(List<Row> rows);
+	}
+
+	private static class MeanAggregator implements RowsAggregator {
+
+		private final JsonNodeFactory jsonNodeFactory = JsonNodeFactory.instance;
+
+		@Override
+		public ObjectNode aggregate(final List<Row> rows) {
+			long timestamp = rows.get(0).getTimestamp("time").toInstant().toEpochMilli();
+
+			double measurement = rows.stream().mapToDouble(r -> r.getDouble("measurement")).filter(m -> Double.isFinite(m)).average().orElse(Double.NaN);
+			double prediction = rows.stream().mapToDouble(r -> r.getDouble("prediction")).filter(p -> Double.isFinite(p)).average().orElse(Double.NaN);
+			double anomalyscore = rows.stream().mapToDouble(r -> r.getDouble("anomalyscore")).filter(s -> Double.isFinite(s)).average().orElse(Double.NaN);
+			boolean isAggregated = rows.size() > 1;
+
+			ObjectNode node = this.jsonNodeFactory.objectNode();
+			node.set("time", this.jsonNodeFactory.numberNode(timestamp));
+			node.set("measurement", this.jsonNodeFactory.numberNode(measurement));
+			node.set("prediction", this.jsonNodeFactory.numberNode(prediction));
+			node.set("anomalyscore", this.jsonNodeFactory.numberNode(anomalyscore));
+			node.set("isAggregated", this.jsonNodeFactory.booleanNode(isAggregated));
+
+			return node;
+		}
+
 	}
 
 	private static class TakeFirstAggregator implements RowsAggregator {
