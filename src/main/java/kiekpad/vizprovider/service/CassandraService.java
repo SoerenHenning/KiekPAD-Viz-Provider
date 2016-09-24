@@ -19,6 +19,8 @@ public class CassandraService {
 
 	private Session session;
 
+	// BETTER A logger should be used to replace the System.out.println()
+
 	@Autowired
 	public CassandraService(@Value("${cassandra.address}") final String host, @Value("${cassandra.port}") final int port,
 			@Value("${cassandra.keyspace}") final String keyspace, @Value("${cassandra.timeout}") final int timeoutInMillis) {
@@ -32,8 +34,8 @@ public class CassandraService {
 	private void createSession(final String host, final int port, final String keyspace, final int timeoutInMillis) {
 		final Instant start = Instant.now();
 
-		System.out.println("Use host: " + host); // TODO
-		System.out.println("Use port: " + port); // TODO
+		// System.out.println("Use host: " + host);
+		// System.out.println("Use port: " + port);
 
 		Cluster cluster = Cluster.builder().addContactPoint(host).withPort(port).build();
 		while (true) {
@@ -41,8 +43,8 @@ public class CassandraService {
 				this.session = cluster.connect(keyspace);
 				break;
 			} catch (NoHostAvailableException exception) {
-				// Host not unavailable
-				System.out.println("Waiting for host..."); // TODO
+				// Host not available
+				// System.out.println("Waiting for host...");
 				if (Duration.between(start, Instant.now()).toMillis() < timeoutInMillis) {
 					cluster.close();
 					cluster = Cluster.builder().addContactPoint(host).withPort(port).build();
@@ -56,7 +58,7 @@ public class CassandraService {
 				}
 			} catch (InvalidQueryException exception) {
 				// Keyspace does not exist
-				System.out.println("Create Keyspace..."); // TODO
+				// System.out.println("Create Keyspace...");
 				createKeyspaceIfNotExists(cluster, keyspace);
 			}
 		}
